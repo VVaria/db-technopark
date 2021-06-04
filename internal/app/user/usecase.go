@@ -1,7 +1,7 @@
 package user
 
 import (
-	"github.com/VVaria/db-technopark/internal/app/models"
+	"github.com/VVaria/db-technopark/internal/models"
 	"github.com/VVaria/db-technopark/internal/app/tools/errors"
 )
 
