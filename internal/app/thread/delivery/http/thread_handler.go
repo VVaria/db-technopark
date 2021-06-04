@@ -8,7 +8,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/gorilla/schema"
 
-	"github.com/VVaria/db-technopark/internal/models"
+	"github.com/VVaria/db-technopark/internal/app/models"
 	"github.com/VVaria/db-technopark/internal/app/post"
 	"github.com/VVaria/db-technopark/internal/app/thread"
 	"github.com/VVaria/db-technopark/internal/app/tools/errors"

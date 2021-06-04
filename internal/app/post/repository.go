@@ -1,6 +1,6 @@
 package post
 
-import "github.com/VVaria/db-technopark/internal/models"
+import "github.com/VVaria/db-technopark/internal/app/models"
 
 type PostRepository interface {
 	//InsertForum(forum *models.Forum) error
