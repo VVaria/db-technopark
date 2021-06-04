@@ -1,5 +1,6 @@
 github.com/VVaria/db-technopark v0.0.0-20210604180430-1f2797001fff h1:Mu2FOfCoDvy1FlgG2YAdEl6ND72VAahfA6Vm2X/PKEA=
 github.com/VVaria/db-technopark v0.0.0-20210604180430-1f2797001fff/go.mod h1:HZWxyy3vPtu6FEFABPJAJMZnC3T7+xeokd5p/MyN/5c=
+github.com/VVaria/db-technopark v0.0.0-20210604181442-53a19947d4ae h1:+LkF8yXfQtZCu0dLvF42mfmFgfEpiMYUSvWscx9cfkQ=
 github.com/gorilla/mux v1.8.0 h1:i40aqfkR1h2SlN9hojwV5ZA91wcXFOvkdNIeFDP5koI=
 github.com/gorilla/mux v1.8.0/go.mod h1:DVbg23sWSpFRCP0SfiEN6jmj59UnW/n46BH5rLB71So=
 github.com/gorilla/schema v1.2.0 h1:YufUaxZYCKGFuAq3c96BOhjgd5nmXiOY9NGzF247Tsc=

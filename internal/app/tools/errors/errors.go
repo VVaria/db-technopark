@@ -1,8 +1,8 @@
 package errors
 
 import (
-"encoding/json"
-"net/http"
+	"encoding/json"
+	"net/http"
 )
 
 type ErrorType uint8
@@ -79,22 +79,22 @@ var CustomErrors = map[ErrorType]*Error{
 	UserCreateConflict: {
 		ErrorCode: UserCreateConflict,
 		HttpError: http.StatusConflict,
-		Message: "conflicts with user creation\n",
+		Message:   "conflicts with user creation\n",
 	},
 	UserProfileConflict: {
 		ErrorCode: UserProfileConflict,
 		HttpError: http.StatusConflict,
-		Message: "conflicts with user profile\n",
+		Message:   "conflicts with user profile\n",
 	},
 	ForumCreateConflict: {
 		ErrorCode: ForumCreateConflict,
 		HttpError: http.StatusConflict,
-		Message: "conflicts with forum creation\n",
+		Message:   "conflicts with forum creation\n",
 	},
 	ForumCreateThreadConflict: {
 		ErrorCode: ForumCreateThreadConflict,
 		HttpError: http.StatusConflict,
-		Message: "conflicts with thread creation\n",
+		Message:   "conflicts with thread creation\n",
 	},
 	PostWrongThread: {
 		ErrorCode: PostWrongThread,
