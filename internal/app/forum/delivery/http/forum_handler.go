@@ -15,12 +15,12 @@ import (
 )
 
 type ForumHandler struct {
-	forumUsecase  forum.ForumUsecase
+	forumUsecase forum.ForumUsecase
 }
 
 func NewForumHandler(forumUsecase forum.ForumUsecase) *ForumHandler {
 	return &ForumHandler{
-		forumUsecase:  forumUsecase,
+		forumUsecase: forumUsecase,
 	}
 }
 

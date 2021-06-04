@@ -12,12 +12,12 @@ import (
 )
 
 type PostUsecase struct {
-	postRepo   post.PostRepository
+	postRepo post.PostRepository
 	//threadRepo thread.ThreadRepository
 }
 
 func NewPostUsecase(postRepo post.PostRepository) post.PostUsecase {
 	return &PostUsecase{
-		postRepo:   postRepo,
+		postRepo: postRepo,
 	}
 }

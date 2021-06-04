@@ -37,11 +37,11 @@ func (c *config) GetPostgresConfig() string {
 
 func init() {
 	Configs = config{
-		Main: main{
+		Main: Main{
 			"localhost",
 			5000,
 		},
-		Postgres: postgres{
+		Postgres: Postgres{
 			"docker",
 			"docker",
 			"docker",

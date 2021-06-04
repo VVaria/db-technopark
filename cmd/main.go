@@ -9,8 +9,8 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/VVaria/db-technopark/configs"
-	"github.com/VVaria/db-technopark/internal/app/tools/middleware"
 	"github.com/VVaria/db-technopark/internal/app/tools/databases"
+	"github.com/VVaria/db-technopark/internal/app/tools/middleware"
 
 	forumHandler "github.com/VVaria/db-technopark/internal/app/forum/delivery/http"
 	forumRepo "github.com/VVaria/db-technopark/internal/app/forum/repository/postgres"

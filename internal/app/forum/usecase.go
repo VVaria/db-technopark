@@ -1,8 +1,8 @@
 package forum
 
 import (
-	//"github.com/VVaria/db-technopark/internal/app/models"
-	"github.com/VVaria/db-technopark/internal/app/tools/errors"
+//"github.com/VVaria/db-technopark/internal/app/models"
+//"github.com/VVaria/db-technopark/internal/app/tools/errors"
 )
 
 type ForumUsecase interface {
