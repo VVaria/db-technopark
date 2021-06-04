@@ -11,7 +11,7 @@ import (
 	"github.com/VVaria/db-technopark/internal/app/forum"
 	//"github.com/VVaria/db-technopark/internal/app/thread"
 	"github.com/VVaria/db-technopark/internal/app/tools/errors"
-	"github.com/VVaria/db-technopark/internal/app/models"
+	//"github.com/VVaria/db-technopark/internal/app/models"
 )
 
 type ForumHandler struct {

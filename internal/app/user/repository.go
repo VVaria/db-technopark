@@ -1,6 +1,6 @@
 package user
 
-import "github.com/VVaria/db-technopark/internal/app/models"
+//import "github.com/VVaria/db-technopark/internal/app/models"
 
 type UserRepository interface {
 	//InsertUser(user *models.User) error
