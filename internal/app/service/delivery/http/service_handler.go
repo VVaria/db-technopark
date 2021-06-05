@@ -33,7 +33,7 @@ func (sh *ServiceHandler) ServiceClearHandler(w http.ResponseWriter, r *http.Req
 	}
 
 	w.WriteHeader(http.StatusOK)
-	w.Write(errors.JSONSuccess("Очистка базы успешно завершена"))
+	w.Write(errors.JSONMessage("Очистка базы успешно завершена"))
 }
 
 func (sh *ServiceHandler) ServiceStatusHandler(w http.ResponseWriter, r *http.Request) {
@@ -45,5 +45,5 @@ func (sh *ServiceHandler) ServiceStatusHandler(w http.ResponseWriter, r *http.Re
 	}
 
 	w.WriteHeader(http.StatusOK)
-	w.Write(errors.JSONSuccess("Кол-во записей в базе данных, включая помеченные как \"удалённые\".", status))
+	w.Write(errors.JSONMessage("Кол-во записей в базе данных, включая помеченные как \"удалённые\".", status))
 }

@@ -22,7 +22,7 @@ func NewUserUsecase(userRepo user.UserRepository) user.UserUsecase {
 func (uu *UserUsecase) CreateUser(user *models.User) ([]models.User, *errors.Error)  {
 	var users []models.User
 	users, err := uu.userRepo.SelectUsers(user)
-	if err != nil {
+	if err != nil && err != sql.ErrNoRows {
 		return nil, errors.UnexpectedInternal(err)
 	}
 	if len(users) != 0 {

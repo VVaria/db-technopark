@@ -1,7 +1,11 @@
 package post
 
+import (
+	"github.com/VVaria/db-technopark/internal/app/tools/errors"
+	"github.com/VVaria/db-technopark/internal/models"
+)
+
 type PostUsecase interface {
-	//CreateForum(forum *models.Forum) (*models.Forum, *errors.Error)
-	//GetForumBySlug(slug string) (*models.Forum, *errors.Error)
-	//GetForumUsersBySlugAndParams(slug string, params *models.ForumParams) ([]*models.User, *errors.Error)
+	GetPostInfo(id int, related string) (interface{}, *errors.Error)
+	ChangePostMessage(post *models.Post) (*models.Post, *errors.Error)
 }

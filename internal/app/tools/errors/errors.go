@@ -40,7 +40,7 @@ func JSONError(error *Error) []byte {
 	return jsonError
 }
 
-func JSONSuccess(message ...interface{}) []byte {
+func JSONMessage(message ...interface{}) []byte {
 	if len(message) > 1 {
 		jsonSucc, err := json.Marshal(Success{Description: message[0].(string), Data: message[1].(string)})
 		if err != nil {

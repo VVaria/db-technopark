@@ -45,8 +45,8 @@ func main() {
 	threadRepo := threadRepo.NewThreadRepository(postgresDB.GetDatabase())
 	userRepo := userRepo.NewUserRepository(postgresDB.GetDatabase())
 
-	forumUsecase := forumUsecase.NewForumUsecase(forumRepo)
-	postUsecase := postUsecase.NewPostUsecase(postRepo, threadRepo)
+	forumUsecase := forumUsecase.NewForumUsecase(forumRepo, userRepo)
+	postUsecase := postUsecase.NewPostUsecase(postRepo, userRepo, forumRepo, threadRepo)
 	serviceUsecase := serviceUsecase.NewServiceUsecase(serviceRepo)
 	threadUsecase := threadUsecase.NewThreadUsecase(threadRepo, forumRepo)
 	userUsecase := userUsecase.NewUserUsecase(userRepo)

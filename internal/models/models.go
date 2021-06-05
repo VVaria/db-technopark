@@ -10,10 +10,9 @@ import (
 
 type Forum struct {
 	ID      int    `json:"-"`
-	UserId  int    `json:"-"`
-	Title   string `json:"title"`
-	User    string `json:"user"`
 	Slug    string `json:"slug"`
+	User    string `json:"user"`
+	Title   string `json:"title"`
 	Posts   int    `json:"posts"`
 	Threads int    `json:"threads"`
 }
@@ -76,7 +75,7 @@ type AllPostInfo struct {
 	Thread *Thread 	   `json:"thread"`
 }
 
-type Parameters struct {
+type ForumUsersParameters struct {
 	Limit int    `json:"limit"`
 	Since string `json:"since"`
 	Desc  bool   `json:"desc"`
@@ -108,6 +107,36 @@ func (v *JsonNullInt64) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+type AllPostInfoWithoutSlug struct {
+	Author *User       `json:"author"`
+	Forum  *Forum      `json:"forum"`
+	Post   *Post       `json:"post"`
+	Thread *ThreadWithoutSlug 	   `json:"thread"`
+}
+
+type ThreadWithoutSlug struct {
+	Id      int    `json:"id"`
+	Author  string `json:"author"`
+	Created time.Time `json:"created"`
+	Forum   string `json:"forum"`
+	Title   string `json:"title"`
+	Message string `json:"message"`
+	Votes   int    `json:"votes"`
+}
+
+func ThreadNoSlug(thread *Thread) *ThreadWithoutSlug {
+	return &ThreadWithoutSlug{
+		Id:      thread.Id,
+		Author:  thread.Author,
+		Created: thread.Created,
+		Forum:   thread.Forum,
+		Title:   thread.Title,
+		Message: thread.Message,
+		Votes:   thread.Votes,
+	}
+}
+
+
 func IsUuid(value string) bool {
 	n := len(value)
 
@@ -118,17 +147,4 @@ func IsUuid(value string) bool {
 	_, err := uuid.Parse(value)
 
 	return err == nil
-}
-
-func ThreadToThreadOut(thread Thread) ThreadOut {
-	return ThreadOut{
-		Id:      thread.Id,
-		Title:   thread.Title,
-		Author:  thread.Author,
-		Forum:   thread.Forum,
-		Message: thread.Message,
-		Votes:   thread.Votes,
-		Slug:    thread.Slug,
-		Created: thread.Created,
-	}
 }
