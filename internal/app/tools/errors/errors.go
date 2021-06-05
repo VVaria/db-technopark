@@ -27,23 +27,21 @@ type Error struct {
 	Message   string    `json:"message"`
 }
 
-func JSONError(error *Error, w http.ResponseWriter) {
+
+func JSONError(error *Error) []byte {
 	jsonError, err := json.Marshal(error)
 	if err != nil {
-		return
+		return []byte("")
 	}
-	w.WriteHeader(error.HttpError)
-	w.Write(jsonError)
+	return jsonError
 }
 
-func JSONSuccess(status int, data interface{}, w http.ResponseWriter) {
-	jsonSuccess, err := json.Marshal(data)
+func JSONSuccess(data interface{}) []byte {
+	body, err := json.Marshal(data)
 	if err != nil {
-		return
+		return []byte("")
 	}
-
-	w.WriteHeader(status)
-	w.Write(jsonSuccess)
+	return body
 }
 
 var CustomErrors = map[ErrorType]*Error{

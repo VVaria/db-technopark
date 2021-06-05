@@ -70,14 +70,14 @@ type Post struct {
 	IsEdited bool             `json:"isEdited"`
 	Message  string           `json:"message"`
 	Parent   JsonNullInt64    `json:"parent"`
-	Thread   int              `json:"thread,"`
+	Thread   int              `json:"id_thread"`
 	Path     pgtype.Int8Array `json:"-"`
 }
 
 type Status struct {
 	User   int `json:"user"`
 	Forum  int `json:"forum"`
-	Thread int `json:"thread"'`
+	Thread int `json:"thread"`
 	Post   int `json:"post"`
 }
 

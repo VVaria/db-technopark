@@ -60,7 +60,7 @@ CREATE UNLOGGED TABLE forum_users
     fullname TEXT NOT NULL,
     about    TEXT,
     email    CITEXT,
-    slug     citext NOT NULL,
+    slug     CITEXT NOT NULL,
 
     FOREIGN KEY (nickname) REFERENCES "users" (nickname),
     FOREIGN KEY (slug) REFERENCES "forum" (slug),
@@ -68,7 +68,7 @@ CREATE UNLOGGED TABLE forum_users
 );
 
 
-CREATE INDEX all_forum_users ON users_forum (nickname, fullname, about, email);
+CREATE INDEX all_forum_users ON forum_users (nickname, fullname, about, email);
 CLUSTER forum_users USING all_forum_users;
 CREATE INDEX nickname_forum_users ON forum_users using hash (nickname);
 CREATE INDEX forums_users_info ON forum_users (fullname, about, email);
@@ -96,7 +96,7 @@ CREATE INDEX IF NOT EXISTS post_thr_id ON posts (id_thread);
 CREATE INDEX IF NOT EXISTS post_path1_path_id_desc ON posts ((path[1]) DESC, path, id);
 CREATE INDEX IF NOT EXISTS post_path1_path_id_asc ON posts ((path[1]) ASC, path, id);
 
-CREATE UNIQUE INDEX IF NOT EXISTS vote_unique on votes (nickname, id_thread);
+CREATE UNIQUE INDEX IF NOT EXISTS vote_unique on votes (author, id_thread);
 
 
 CREATE OR REPLACE FUNCTION updateForumUser() RETURNS TRIGGER AS
@@ -104,7 +104,7 @@ $update_forum_user$
 DECLARE
     new_fullname CITEXT;
     new_about    CITEXT;
-    new_email CITEXT;
+    new_email    CITEXT;
 BEGIN
     SELECT fullname, about, email FROM users WHERE nickname = NEW.author INTO new_fullname, new_about, new_email;
     INSERT INTO forum_users (nickname, fullname, about, email, slug)
@@ -114,12 +114,12 @@ end
 $update_forum_user$ LANGUAGE plpgsql;
 CREATE TRIGGER thread_update_forum_user
     AFTER INSERT
-    ON thread
+    ON threads
     FOR EACH ROW
 EXECUTE PROCEDURE updateForumUser();
 CREATE TRIGGER post_update_forum_user
     AFTER INSERT
-    ON post
+    ON posts
     FOR EACH ROW
 EXECUTE PROCEDURE updateForumUser();
 
@@ -175,9 +175,9 @@ BEGIN
     IF (NEW.parent IS NULL) THEN
         NEW.path := array_append(new.path, new.id);
     ELSE
-        SELECT path FROM post WHERE id = new.parent INTO parentPath;
-        SELECT thread FROM post WHERE id = parentPath[1] INTO first_parent_thread;
-        IF NOT FOUND OR first_parent_thread != NEW.thread THEN
+        SELECT path FROM posts WHERE id = new.parent INTO parentPath;
+        SELECT id_thread FROM posts WHERE id = parentPath[1] INTO first_parent_thread;
+        IF NOT FOUND OR first_parent_thread != NEW.id_thread THEN
             RAISE EXCEPTION 'parent is from different thread' USING ERRCODE = '00409';
         end if;
         NEW.path := NEW.path || parentPath || new.id;
@@ -188,6 +188,6 @@ end
 $update_path$ LANGUAGE plpgsql;
 CREATE TRIGGER update_path
     BEFORE INSERT
-    ON post
+    ON posts
     FOR EACH ROW
 EXECUTE PROCEDURE updatePath();

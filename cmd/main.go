@@ -34,7 +34,7 @@ import (
 )
 
 func main() {
-	postgresDB, err := database.NewPostgres(configs.Configs.GetPostgresConfig())
+	postgresDB, err := databases.NewPostgres(configs.Configs.GetPostgresConfig())
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -59,7 +59,7 @@ func main() {
 
 	router := mux.NewRouter()
 	api := router.PathPrefix("/api").Subrouter()
-	api.Use(middleware.appJSONMiddleware)
+	api.Use(middleware.AppJSONMiddleware)
 
 	forumHandler.Configure(api)
 	postHandler.Configure(api)

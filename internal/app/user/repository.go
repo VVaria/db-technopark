@@ -1,10 +1,10 @@
 package user
 
-//import "github.com/VVaria/db-technopark/internal/app/models"
+import "github.com/VVaria/db-technopark/internal/models"
 
 type UserRepository interface {
-	//InsertUser(user *models.User) error
-	//UpdateUser(user *models.User) error
-	//SelectUserByNickName(nickname string) (*models.User, error)
-	//SelectUserByNickNameAndEmail(nickname string, email string) ([]*models.User, error)
+	SelectUsers(user *models.User) ([]models.User, error)
+	InsertUser(user *models.User) error
+	SelectUserByNickname(nickname string) (*models.User, error)
+	Update(user *models.User) error
 }

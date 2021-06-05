@@ -1,17 +1,16 @@
 package postgres
 
 import (
-	"github.com/jackc/pgx"
-
+	"database/sql"
 	//"github.com/VVaria/db-technopark/internal/app/models"
 	"github.com/VVaria/db-technopark/internal/app/thread"
 )
 
 type ThreadRepository struct {
-	conn *pgx.ConnPool
+	conn *sql.DB
 }
 
-func NewThreadRepository(conn *pgx.ConnPool) thread.ThreadRepository {
+func NewThreadRepository(conn *sql.DB) thread.ThreadRepository {
 	return &ThreadRepository{
 		conn: conn,
 	}

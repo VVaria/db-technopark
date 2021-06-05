@@ -1,17 +1,16 @@
 package postgres
 
 import (
-	"github.com/jackc/pgx"
-
+	"database/sql"
 	"github.com/VVaria/db-technopark/internal/app/forum"
 	//"github.com/VVaria/db-technopark/internal/app/models"
 )
 
 type ForumRepository struct {
-	conn *pgx.ConnPool
+	conn *sql.DB
 }
 
-func NewForumRepository(conn *pgx.ConnPool) forum.ForumRepository {
+func NewForumRepository(conn *sql.DB) forum.ForumRepository {
 	return &ForumRepository{
 		conn: conn,
 	}

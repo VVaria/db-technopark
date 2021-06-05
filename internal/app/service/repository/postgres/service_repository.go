@@ -1,17 +1,16 @@
 package postgres
 
 import (
-	"github.com/jackc/pgx"
-
+	"database/sql"
 	//"github.com/VVaria/db-technopark/internal/app/models"
 	"github.com/VVaria/db-technopark/internal/app/service"
 )
 
 type ServiceRepository struct {
-	conn *pgx.ConnPool
+	conn *sql.DB
 }
 
-func NewServiceRepository(conn *pgx.ConnPool) service.ServiceRepository {
+func NewServiceRepository(conn *sql.DB) service.ServiceRepository {
 	return &ServiceRepository{
 		conn: conn,
 	}
