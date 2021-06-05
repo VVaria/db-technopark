@@ -1,7 +1,11 @@
 package service
 
+import (
+	"github.com/VVaria/db-technopark/internal/app/tools/errors"
+	"github.com/VVaria/db-technopark/internal/models"
+)
+
 type ServiceUsecase interface {
-	//CreateForum(forum *models.Forum) (*models.Forum, *errors.Error)
-	//GetForumBySlug(slug string) (*models.Forum, *errors.Error)
-	//GetForumUsersBySlugAndParams(slug string, params *models.ForumParams) ([]*models.User, *errors.Error)
+	ClearDatabases() *errors.Error
+	GetServiceStatus() (*models.Status, *errors.Error)
 }

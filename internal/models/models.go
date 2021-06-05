@@ -18,18 +18,6 @@ type Forum struct {
 	Threads int    `json:"threads"`
 }
 
-type ThreadOut struct {
-	Id       int       `json:"id"`
-	Title    string    `json:"title"`
-	Author   string    `json:"author"`
-	AuthorId int       `json:"-"`
-	Forum    string    `json:"forum"`
-	Message  string    `json:"message"`
-	Votes    int       `json:"votes"`
-	Slug     string    `json:"-"`
-	Created  time.Time `json:"created"`
-}
-
 type Thread struct {
 	Id       int       `json:"id"`
 	Title    string    `json:"title"`
@@ -40,17 +28,6 @@ type Thread struct {
 	Votes    int       `json:"votes"`
 	Slug     string    `json:"slug"`
 	Created  time.Time `json:"created"`
-}
-
-type ThreadIn struct {
-	Id      int       `json:"id"`
-	Title   string    `json:"title"`
-	Author  string    `json:"author"`
-	Forum   string    `json:"forum"`
-	Message string    `json:"message"`
-	Votes   int       `json:"votes"`
-	Slug    string    `json:"slug"`
-	Created time.Time `json:"-"`
 }
 
 type User struct {
@@ -92,11 +69,11 @@ type PostUpdate struct {
 	Message string `json:"message"`
 }
 
-type PostFull struct {
+type AllPostInfo struct {
 	Author *User       `json:"author"`
 	Forum  *Forum      `json:"forum"`
 	Post   *Post       `json:"post"`
-	Thread interface{} `json:"thread"`
+	Thread *Thread 	   `json:"thread"`
 }
 
 type Parameters struct {

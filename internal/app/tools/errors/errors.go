@@ -27,6 +27,10 @@ type Error struct {
 	Message   string    `json:"message"`
 }
 
+type Success struct {
+	Description string `json:"description"`
+	Data    string `json:"data"`
+}
 
 func JSONError(error *Error) []byte {
 	jsonError, err := json.Marshal(error)
@@ -36,12 +40,19 @@ func JSONError(error *Error) []byte {
 	return jsonError
 }
 
-func JSONSuccess(data interface{}) []byte {
-	body, err := json.Marshal(data)
+func JSONSuccess(message ...interface{}) []byte {
+	if len(message) > 1 {
+		jsonSucc, err := json.Marshal(Success{Description: message[0].(string), Data: message[1].(string)})
+		if err != nil {
+			return []byte("")
+		}
+		return jsonSucc
+	}
+	jsonSucc, err := json.Marshal(Success{Description: message[0].(string)})
 	if err != nil {
 		return []byte("")
 	}
-	return body
+	return jsonSucc
 }
 
 var CustomErrors = map[ErrorType]*Error{

@@ -41,12 +41,12 @@ func (uh *UserHandler) UserCreateHandler(w http.ResponseWriter, r *http.Request)
 	userData, errE := uh.userUsecase.CreateUser(user)
 	if errE != nil {
 		w.WriteHeader(errE.HttpError)
-		w.Write(errors.JSONSuccess(userData))
+		w.Write(errors.JSONSuccess("Пользователь уже присутсвует в базе данных.", userData))
 		return
 	}
 
 	w.WriteHeader(http.StatusCreated)
-	w.Write(errors.JSONSuccess(user))
+	w.Write(errors.JSONSuccess(" Пользователь успешно создан.", user))
 }
 
 func (uh *UserHandler) UserGetProfileHandler(w http.ResponseWriter, r *http.Request) {
@@ -61,7 +61,7 @@ func (uh *UserHandler) UserGetProfileHandler(w http.ResponseWriter, r *http.Requ
 	}
 
 	w.WriteHeader(http.StatusOK)
-	w.Write(errors.JSONSuccess(user))
+	w.Write(errors.JSONSuccess("Информация о пользователе.", user))
 }
 
 func (uh *UserHandler) UserChangeProfileHandler(w http.ResponseWriter, r *http.Request) {
@@ -83,5 +83,5 @@ func (uh *UserHandler) UserChangeProfileHandler(w http.ResponseWriter, r *http.R
 	}
 
 	w.WriteHeader(http.StatusOK)
-	w.Write(errors.JSONSuccess(user))
+	w.Write(errors.JSONSuccess("Актуальная информация о пользователе после изменения профиля.", user))
 }

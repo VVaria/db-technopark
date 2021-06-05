@@ -1,29 +1,39 @@
 package databases
 
 import (
-	"database/sql"
+	"github.com/jackc/pgx"
 )
 
 type Postgres struct {
-	postgresDatabase *sql.DB
+	postgresDatabase *pgx.ConnPool
 }
 
 func NewPostgres(dataSourceName string) (*Postgres, error) {
-	sqlConn, err := sql.Open("pgx", dataSourceName)
+	pgxConn, err := pgx.ParseConnectionString(dataSourceName)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := sqlConn.Ping(); err != nil {
+	pgxConn.PreferSimpleProtocol = true
+
+	poolConfig := pgx.ConnPoolConfig{
+		ConnConfig:     pgxConn,
+		MaxConnections: 200,
+		AfterConnect:   nil,
+		AcquireTimeout: 0,
+	}
+
+	pool, err := pgx.NewConnPool(poolConfig)
+	if err != nil {
 		return nil, err
 	}
 
 	return &Postgres{
-		postgresDatabase: sqlConn,
+		postgresDatabase: pool,
 	}, nil
 }
 
-func (p *Postgres) GetDatabase() *sql.DB {
+func (p *Postgres) GetDatabase() *pgx.ConnPool{
 	return p.postgresDatabase
 }
 
