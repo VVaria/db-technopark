@@ -2,17 +2,13 @@ package http
 
 import (
 	"encoding/json"
-	"fmt"
-	"github.com/VVaria/db-technopark/internal/models"
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/gorilla/schema"
 
-	//"github.com/VVaria/db-technopark/internal/app/models"
-	"github.com/VVaria/db-technopark/internal/app/post"
 	"github.com/VVaria/db-technopark/internal/app/thread"
 	"github.com/VVaria/db-technopark/internal/app/tools/errors"
+	"github.com/VVaria/db-technopark/internal/models"
 )
 
 type ThreadHandler struct {
