@@ -2,17 +2,14 @@ package http
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strconv"
-
-	"github.com/gorilla/mux"
-	"github.com/gorilla/schema"
 
 	"github.com/VVaria/db-technopark/internal/app/forum"
 	"github.com/VVaria/db-technopark/internal/app/thread"
 	"github.com/VVaria/db-technopark/internal/app/tools/errors"
 	"github.com/VVaria/db-technopark/internal/models"
+	"github.com/gorilla/mux"
 )
 
 type ForumHandler struct {
@@ -121,7 +118,7 @@ func (fh *ForumHandler) ForumUsersHandler(w http.ResponseWriter, r *http.Request
 	vars := mux.Vars(r)
 	slug := vars["slug"]
 
-	params := &models.ForumUsersParameters{}
+	params := &models.Parameters{}
 	var err error
 	params.Limit, err = strconv.Atoi(r.URL.Query().Get("limit"))
 	if err != nil {
@@ -147,4 +144,46 @@ func (fh *ForumHandler) ForumUsersHandler(w http.ResponseWriter, r *http.Request
 
 	w.WriteHeader(http.StatusOK)
 	w.Write(errors.JSONMessage("Информация о пользователях форума.", users))
+}
+
+
+func (fh *ForumHandler) ForumThreadsHandler(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	slug := vars["slug"]
+
+	params := &models.Parameters{}
+	var err error
+	params.Limit, err = strconv.Atoi(r.URL.Query().Get("limit"))
+	if err != nil {
+		params.Limit = 100
+	}
+	params.Since = r.URL.Query().Get("since")
+	params.Desc, err = strconv.ParseBool(r.URL.Query().Get("desc"))
+	if err != nil {
+		params.Desc = true
+	}
+
+	threads, errE := fh.forumUsecase.GetForumThreads(slug, params)
+	if errE.ErrorCode == errors.ForumNotExist {
+		w.WriteHeader(errE.HttpError)
+		w.Write(errors.JSONMessage("Форум отсутсвует в системе."))
+		return
+	}
+	if errE != nil {
+		w.WriteHeader(errE.HttpError)
+		w.Write(errors.JSONError(errE))
+		return
+	}
+
+	var resultThreads []interface{}
+	for _, i := range threads {
+		if models.IsUuid(i.Slug) {
+			resultThreads = append(resultThreads, models.ThreadNoSlug(i))
+		} else {
+			resultThreads = append(resultThreads, i)
+		}
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write(errors.JSONMessage("Информация о ветках обсуждения на форуме.", resultThreads))
 }

@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"github.com/VVaria/db-technopark/internal/app/forum"
+	"github.com/VVaria/db-technopark/internal/app/thread"
 	"github.com/VVaria/db-technopark/internal/app/tools/errors"
 	"github.com/VVaria/db-technopark/internal/app/user"
 	"github.com/VVaria/db-technopark/internal/models"
@@ -11,12 +12,14 @@ import (
 type ForumUsecase struct {
 	forumRepo forum.ForumRepository
 	userRepo user.UserRepository
+	threadRepo thread.ThreadRepository
 }
 
-func NewForumUsecase(forumRepo forum.ForumRepository, userRepo user.UserRepository) forum.ForumUsecase {
+func NewForumUsecase(forumRepo forum.ForumRepository, userRepo user.UserRepository, threadRepo thread.ThreadRepository) forum.ForumUsecase {
 	return &ForumUsecase{
 		forumRepo: forumRepo,
 		userRepo: userRepo,
+		threadRepo: threadRepo,
 	}
 }
 
@@ -56,7 +59,7 @@ func (fu *ForumUsecase) GetForumInfo(slug string) (*models.Forum, *errors.Error)
 }
 
 
-func (fu *ForumUsecase) GetForumUsers(slug string, params *models.ForumUsersParameters) ([]*models.User, *errors.Error) {
+func (fu *ForumUsecase) GetForumUsers(slug string, params *models.Parameters) ([]*models.User, *errors.Error) {
 	_, err := fu.forumRepo.SelectForumBySlug(slug)
 	if err != nil {
 		return nil, errors.Cause(errors.ForumNotExist)
@@ -68,4 +71,18 @@ func (fu *ForumUsecase) GetForumUsers(slug string, params *models.ForumUsersPara
 	}
 
 	return users, nil
+}
+
+func (fu *ForumUsecase) GetForumThreads(slug string, params *models.Parameters) ([]*models.Thread, *errors.Error) {
+	_, err := fu.forumRepo.SelectForumBySlug(slug)
+	if err != nil {
+		return nil, errors.Cause(errors.ForumNotExist)
+	}
+
+	threads, err := fu.threadRepo.SelectForumThreads(slug, params)
+	if err != nil {
+		return nil, errors.UnexpectedInternal(err)
+	}
+
+	return threads, nil
 }

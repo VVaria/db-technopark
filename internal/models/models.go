@@ -75,7 +75,7 @@ type AllPostInfo struct {
 	Thread *Thread 	   `json:"thread"`
 }
 
-type ForumUsersParameters struct {
+type Parameters struct {
 	Limit int    `json:"limit"`
 	Since string `json:"since"`
 	Desc  bool   `json:"desc"`
