@@ -45,16 +45,16 @@ func main() {
 	threadRepo := threadRepo.NewThreadRepository(postgresDB.GetDatabase())
 	userRepo := userRepo.NewUserRepository(postgresDB.GetDatabase())
 
-	forumUsecase := forumUsecase.NewForumUsecase(forumRepo, userRepo)
+	forumUsecase := forumUsecase.NewForumUsecase(forumRepo, userRepo, threadRepo)
 	postUsecase := postUsecase.NewPostUsecase(postRepo, userRepo, forumRepo, threadRepo)
 	serviceUsecase := serviceUsecase.NewServiceUsecase(serviceRepo)
-	threadUsecase := threadUsecase.NewThreadUsecase(threadRepo, forumRepo)
+	threadUsecase := threadUsecase.NewThreadUsecase(threadRepo, forumRepo, userRepo, postRepo)
 	userUsecase := userUsecase.NewUserUsecase(userRepo)
 
 	forumHandler := forumHandler.NewForumHandler(forumUsecase, threadUsecase)
 	postHandler := postHandler.NewPostHandler(postUsecase)
 	serviceHandler := serviceHandler.NewServiceHandler(serviceUsecase)
-	threadHandler := threadHandler.NewThreadHandler(threadUsecase, postUsecase)
+	threadHandler := threadHandler.NewThreadHandler(threadUsecase)
 	userHandler := userHandler.NewUserHandler(userUsecase)
 
 	router := mux.NewRouter()

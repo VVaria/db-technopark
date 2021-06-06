@@ -7,4 +7,7 @@ import (
 
 type ThreadUsecase interface {
 	CreateThread(thread *models.Thread) (*models.Thread, *errors.Error)
+	CreateThreadPosts(thread string, posts []*models.Post) ([]*models.Post, *errors.Error)
+	GetThreadInfo(thread string) (*models.Thread, *errors.Error)
+	RefreshThread(threadId string, thread *models.Thread) (*models.Thread, *errors.Error)
 }

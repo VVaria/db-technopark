@@ -1,9 +1,9 @@
 package postgres
 
 import (
+	"fmt"
 	"github.com/VVaria/db-technopark/internal/models"
 	"github.com/jackc/pgx"
-
 	//"github.com/VVaria/db-technopark/internal/app/models"
 	"github.com/VVaria/db-technopark/internal/app/thread"
 )
@@ -24,6 +24,21 @@ func (tr *ThreadRepository) SelectThreadByID(id int) (*models.Thread, error) {
 		select id, title, author, forum, message, votes, slug, created 
 		from threads
 		where id=$1 LIMIT 1;`, id)
+
+	err := query.Scan(&thread.Id, &thread.Title, &thread.Author, &thread.Forum, &thread.Message, &thread.Votes,
+		&thread.Slug, &thread.Created)
+	if err != nil {
+		return nil, err
+	}
+	return &thread, nil
+}
+
+func (tr *ThreadRepository) SelectThreadBySlug(slug string) (*models.Thread, error) {
+	var thread models.Thread
+	query := tr.conn.QueryRow(`
+		select id, title, author, forum, message, votes, slug, created 
+		from threads
+		where slug=$1 LIMIT 1;`, slug)
 
 	err := query.Scan(&thread.Id, &thread.Title, &thread.Author, &thread.Forum, &thread.Message, &thread.Votes,
 		&thread.Slug, &thread.Created)
@@ -60,7 +75,7 @@ func (tr *ThreadRepository) SelectForumThreads(slug string, params *models.Param
 	if params.Since != "" {
 		if params.Desc {
 			query, err = tr.conn.Query(`
-					SELECT id, title, author, forum, message, votes, slug, created FROM thread
+					SELECT id, title, author, forum, message, votes, slug, created FROM threads
 					WHERE forum=$1 AND created <= $2
 					ORDER BY created DESC
 					LIMIT $3`,
@@ -69,7 +84,7 @@ func (tr *ThreadRepository) SelectForumThreads(slug string, params *models.Param
 				params.Limit)
 		} else {
 			query, err = tr.conn.Query(`
-					SELECT id, title, author, forum, message, votes, slug, created FROM thread
+					SELECT id, title, author, forum, message, votes, slug, created FROM threads
 					WHERE forum=$1 AND created >= $2
 					ORDER BY created ASC
 					LIMIT $3`,
@@ -80,7 +95,7 @@ func (tr *ThreadRepository) SelectForumThreads(slug string, params *models.Param
 	} else {
 		if params.Desc {
 			query, err = tr.conn.Query(`
-					SELECT id, title, author, forum, message, votes, slug, created FROM thread
+					SELECT id, title, author, forum, message, votes, slug, created FROM threads
 					WHERE forum=$1
 					ORDER BY created DESC
 					LIMIT $2`,
@@ -88,7 +103,7 @@ func (tr *ThreadRepository) SelectForumThreads(slug string, params *models.Param
 				params.Limit)
 		} else {
 			query, err = tr.conn.Query(`
-					SELECT id, title, author, forum, message, votes, slug, created FROM thread
+					SELECT id, title, author, forum, message, votes, slug, created FROM threads
 					WHERE forum=$1
 					ORDER BY created ASC
 					LIMIT $2`,
@@ -112,4 +127,29 @@ func (tr *ThreadRepository) SelectForumThreads(slug string, params *models.Param
 	}
 
 	return threads, nil
+}
+
+func (tr *ThreadRepository) UpdateThread(thread *models.Thread) error {
+	queryString := `
+		UPDATE threads 
+		SET title=COALESCE(NULLIF($1, ''), title), message=COALESCE(NULLIF($2, ''), message) 
+		WHERE %s 
+		RETURNING * `
+
+	var query *pgx.Row
+	if thread.Slug == "" {
+		queryString = fmt.Sprintf(queryString, `id=$3`)
+		query = tr.conn.QueryRow(queryString, thread.Title, thread.Message, thread.Id)
+	} else {
+		queryString = fmt.Sprintf(queryString, `slug=$3`)
+		query = tr.conn.QueryRow(queryString, thread.Title, thread.Message, thread.Slug)
+	}
+
+	err := query.Scan(&thread.Id, &thread.Author, &thread.Created, &thread.Forum, &thread.Message, &thread.Slug,
+		&thread.Title, &thread.Votes)
+
+	if err != nil {
+		return err
+	}
+	return nil
 }
