@@ -21,7 +21,7 @@ func NewUserRepository(conn *pgx.ConnPool) user.UserRepository {
 func (ur *UserRepository) SelectUsers(user *models.User) ([]models.User, error) {
 	var users []models.User
 	rows, err := ur.conn.Query(`
-			select Nickname, FullName, About, Email 
+			select * 
 			from users 
 			where Nickname=$1 or Email=$2;
 			`, user.Nickname, user.Email)
@@ -31,7 +31,7 @@ func (ur *UserRepository) SelectUsers(user *models.User) ([]models.User, error) 
 	}
 	for rows.Next() {
 		var userInfo models.User
-		err := rows.Scan(&userInfo.Nickname, &userInfo.FullName, &userInfo.About, &userInfo.Email)
+		err := rows.Scan(&userInfo.Nickname, &userInfo.FullName, &userInfo.Email, &userInfo.About)
 		if err != nil {
 			return users, err
 		}
@@ -44,26 +44,23 @@ func (ur *UserRepository) SelectUsers(user *models.User) ([]models.User, error) 
 func (ur *UserRepository) InsertUser(user *models.User) error {
 	_, err := ur.conn.Exec(`
 			INSERT INTO 
-			users(nickname, fullname, about, email) 
+			users(nickname, fullname, email, about) 
 			VALUES ($1, $2, $3, $4)`,
-		user.Nickname,
-		user.FullName,
-		user.About,
-		user.Email)
+		user.Nickname, user.FullName, user.Email, user.About)
 
 	return err
 }
 
 func (ur *UserRepository) SelectUserByNickname(nickname string) (*models.User, error) {
 	query := ur.conn.QueryRow(`
-		select nickname, fullname, about, email 
+		select * 
 		from users 
 		where nickname=$1 
 		LIMIT 1;
 		`, nickname)
 
 	var user models.User
-	err := query.Scan(&user.Nickname, &user.FullName, &user.About, &user.Email)
+	err := query.Scan(&user.Nickname, &user.FullName, &user.Email, &user.About)
 	if err != nil {
 		return nil, err
 	}
@@ -75,13 +72,13 @@ func (ur *UserRepository) Update(user *models.User) error {
 	query := ur.conn.QueryRow(`
 			UPDATE users SET
 			fullname=COALESCE(NULLIF($1, ''), fullname),
-			about=COALESCE(NULLIF($2, ''), about),
-			email=COALESCE(NULLIF($3, ''), email)
+			email=COALESCE(NULLIF($3, ''), email),
+			about=COALESCE(NULLIF($2, ''), about)
 			WHERE nickname=$4
-			RETURNING nickname, fullname, about, email
-			`, user.FullName, user.About, user.Email, user.Nickname)
+			RETURNING nickname, fullname, email, about
+			`, user.FullName, user.Email, user.About, user.Nickname)
 
-	err := query.Scan(&user.Nickname, &user.FullName, &user.About, &user.Email)
+	err := query.Scan(&user.Nickname, &user.FullName, &user.Email, &user.About)
 	if err != nil {
 		return err
 	}
@@ -101,18 +98,14 @@ func (ur *UserRepository) SelectForumUsers(slug string, params *models.Parameter
 					WHERE forum=$1 AND nickname < $2
 					ORDER BY nickname DESC
 					LIMIT NULLIF($3, 0)`,
-				slug,
-				params.Since,
-				params.Limit)
+				slug, params.Since, params.Limit)
 		} else {
 			query, err = ur.conn.Query(`
 					SELECT nickname, fullname, about, email FROM forum_users
 					WHERE forum=$1 AND nickname > $2
 					ORDER BY nickname ASC
 					LIMIT NULLIF($3, 0)`,
-				slug,
-				params.Since,
-				params.Limit)
+				slug, params.Since, params.Limit)
 		}
 	} else {
 		if params.Desc {
@@ -121,16 +114,14 @@ func (ur *UserRepository) SelectForumUsers(slug string, params *models.Parameter
 					WHERE forum=$1
 					ORDER BY nickname DESC
 					LIMIT NULLIF($2, 0)`,
-				slug,
-				params.Limit)
+				slug, params.Limit)
 		} else {
 			query, err = ur.conn.Query(`
 					SELECT nickname, fullname, about, email FROM forum_users
 					WHERE forum=$1
 					ORDER BY nickname ASC
 					LIMIT NULLIF($2, 0)`,
-				slug,
-				params.Limit)
+				slug, params.Limit)
 		}
 	}
 	var users []*models.User

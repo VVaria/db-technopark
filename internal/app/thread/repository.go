@@ -10,4 +10,7 @@ type ThreadRepository interface {
 	SelectForumThreads(slug string, params *models.Parameters) ([]*models.Thread, error)
 	SelectThreadBySlug(slug string) (*models.Thread, error)
 	UpdateThread(thread *models.Thread) error
+	InsertVote(vote *models.Vote) error
+	UpdateVote(vote *models.Vote) error
+	UpdateThreadVotes(id int) error
 }

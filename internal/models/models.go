@@ -43,11 +43,11 @@ type Post struct {
 	AuthorId int              `json:"-"`
 	Created  time.Time        `json:"created"`
 	Forum    string           `json:"forum"`
-	IsEdited bool             `json:"isEdited"`
 	Message  string           `json:"message"`
 	Parent   JsonNullInt64    `json:"parent"`
 	Thread   int              `json:"id_thread"`
 	Path     pgtype.Int8Array `json:"-"`
+	IsEdited bool             `json:"isEdited"`
 }
 
 type Status struct {
@@ -63,11 +63,6 @@ type Vote struct {
 	Thread   int    `json:"-"`
 }
 
-type PostUpdate struct {
-	ID      int    `json:"-"`
-	Message string `json:"message"`
-}
-
 type AllPostInfo struct {
 	Author *User       `json:"author"`
 	Forum  *Forum      `json:"forum"`
@@ -79,6 +74,13 @@ type Parameters struct {
 	Limit int    `json:"limit"`
 	Since string `json:"since"`
 	Desc  bool   `json:"desc"`
+}
+
+type ThreadPostParameters struct {
+	Limit int    `json:"limit"`
+	Since int    `json:"since"`
+	Desc  bool   `json:"desc"`
+	Sort  string `json:"sort"`
 }
 
 type JsonNullInt64 struct {

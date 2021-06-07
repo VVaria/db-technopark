@@ -125,3 +125,67 @@ func (tu *ThreadUsecase) RefreshThread(threadId string, thread *models.Thread) (
 
 	return thread, nil
 }
+
+func (tu *ThreadUsecase) GetThreadPosts(slug string, params *models.ThreadPostParameters) ([]*models.Post, *errors.Error) {
+	threadInfo, errE := tu.GetThreadInfo(slug)
+	if errE != nil {
+		return nil, errors.Cause(errors.ThreadNotExist)
+	}
+
+	var posts []*models.Post
+	var err error
+	switch params.Sort {
+	case "flat":
+		posts, err = tu.postRepo.SelectThreadPostsFlat(threadInfo.Id, params)
+		if err != nil {
+			return nil, errors.UnexpectedInternal(err)
+		}
+		break
+	case "tree":
+		posts, err = tu.postRepo.SelectThreadPostsTree(threadInfo.Id, params)
+		if err != nil {
+			return nil, errors.UnexpectedInternal(err)
+		}
+		break
+	case "parent_tree":
+		posts, err = tu.postRepo.SelectThreadPostsParent(threadInfo.Id, params)
+		if err != nil {
+			return nil, errors.UnexpectedInternal(err)
+		}
+		break
+	}
+	return posts, nil
+}
+
+func (tu *ThreadUsecase) ThreadVote(slug string, vote *models.Vote) (*models.Thread, *errors.Error) {
+	threadInfo, errE := tu.GetThreadInfo(slug)
+	if errE != nil {
+		return nil, errE
+	}
+	vote.Thread = threadInfo.Id
+
+	err := tu.threadRepo.InsertVote(vote)
+	if err != nil {
+		if pgErr, ok := err.(pgx.PgError); ok && pgErr.Code == "23503" {
+			return nil, errors.Cause(errors.UserNotExist)
+		}
+		if pgErr, ok := err.(pgx.PgError); ok && pgErr.Code == "23505" {
+			err = tu.threadRepo.UpdateVote(vote)
+			if err != nil {
+				return nil, errors.UnexpectedInternal(err)
+			}
+
+			threadInfo, errE = tu.GetThreadInfo(slug)
+			if errE != nil {
+				return nil, errE
+			}
+			return threadInfo, nil
+		}
+		return nil, errors.UnexpectedInternal(err)
+	}
+	threadInfo, errE = tu.GetThreadInfo(slug)
+	if errE != nil {
+		return nil, errE
+	}
+	return threadInfo, nil
+}

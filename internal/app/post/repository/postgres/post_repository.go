@@ -6,7 +6,6 @@ import (
 	"github.com/jackc/pgx"
 	"strings"
 	"time"
-
 	//"github.com/VVaria/db-technopark/internal/app/models"
 	"github.com/VVaria/db-technopark/internal/app/post"
 	//"github.com/VVaria/db-technopark/internal/app/tools/null"
@@ -88,4 +87,167 @@ func (pr *PostRepository) InsertPosts(posts []*models.Post, threadID int, thread
 	}
 
 	return postsInfo, nil
+}
+
+func (pr *PostRepository) SelectThreadPostsFlat(id int, params *models.ThreadPostParameters) ([]*models.Post, error) {
+	var query *pgx.Rows
+	var err error
+
+	if params.Since == 0 {
+		if params.Desc {
+			query, err = pr.conn.Query(`
+					SELECT * FROM posts
+					WHERE id_thread=$1 
+					ORDER BY id DESC 
+					LIMIT NULLIF($2, 0)`,
+				id, params.Limit)
+		} else {
+			query, err = pr.conn.Query(`
+					SELECT * FROM posts
+					WHERE id_thread=$1 
+					ORDER BY id ASC 
+					LIMIT NULLIF($2, 0)`,
+				id, params.Limit)
+		}
+	} else {
+		if params.Desc {
+			query, err = pr.conn.Query(`
+					SELECT * FROM posts
+					WHERE id_thread=$1 AND id < $2 
+					ORDER BY id DESC 
+					LIMIT NULLIF($3, 0)`,
+				id, params.Since, params.Limit)
+		} else {
+			query, err = pr.conn.Query(`
+					SELECT * FROM posts 
+					WHERE id_thread=$1 AND id > $2 
+					ORDER BY id ASC 
+					LIMIT NULLIF($3, 0)`,
+				id, params.Since, params.Limit)
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer query.Close()
+
+	var posts []*models.Post
+	for query.Next() {
+		var p models.Post
+		err = query.Scan(&p.ID, &p.Author, &p.Created, &p.Forum, &p.Message, &p.Parent, &p.Thread, &p.Path, &p.IsEdited)
+		if err != nil {
+			return nil, err
+		}
+		posts = append(posts, &p)
+	}
+
+	return posts, err
+}
+
+func (pr *PostRepository) SelectThreadPostsTree(id int, params *models.ThreadPostParameters) ([]*models.Post, error) {
+	var query *pgx.Rows
+	var err error
+
+	if params.Since == 0 {
+		if params.Desc {
+			query, err = pr.conn.Query(`
+					SELECT * FROM posts
+					WHERE id_thread=$1 
+					ORDER BY path DESC, id DESC 
+					LIMIT NULLIF($2, 0)`,
+				id, params.Limit)
+		} else {
+			query, err = pr.conn.Query(`
+					SELECT * FROM posts
+					WHERE id_thread=$1 
+					ORDER BY path ASC, id ASC
+					LIMIT NULLIF($2, 0)`,
+				id, params.Limit)
+		}
+	} else {
+		if params.Desc {
+			query, err = pr.conn.Query(`
+					SELECT * FROM posts
+					WHERE id_thread=$1 AND PATH < (SELECT path FROM posts WHERE id = $2)
+					ORDER BY path DESC, id DESC 
+					LIMIT NULLIF($3, 0)`,
+				id, params.Since, params.Limit)
+		} else {
+			query, err = pr.conn.Query(`
+					SELECT * FROM posts
+					WHERE id_thread=$1 AND PATH > (SELECT path FROM post WHERE id = $2)
+					ORDER BY path ASC, id ASC 
+					LIMIT NULLIF($3, 0)`,
+				id, params.Since, params.Limit)
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer query.Close()
+
+	var posts []*models.Post
+	for query.Next() {
+		var p models.Post
+		err = query.Scan(&p.ID, &p.Author, &p.Created, &p.Forum, &p.Message, &p.Parent, &p.Thread, &p.Path, &p.IsEdited)
+		if err != nil {
+			return nil, err
+		}
+		posts = append(posts, &p)
+	}
+
+	return posts, nil
+}
+
+func (pr *PostRepository) SelectThreadPostsParent(id int, params *models.ThreadPostParameters) ([]*models.Post, error) {
+	var query *pgx.Rows
+	var err error
+
+	if params.Since == 0 {
+		if params.Desc {
+			query, err = pr.conn.Query(`
+					SELECT * FROM posts
+					WHERE path[1] IN (SELECT id FROM posts WHERE id_thread = $1 AND parent IS NULL ORDER BY id DESC LIMIT $2)
+					ORDER BY path[1] DESC, path, id`,
+				id, params.Limit)
+		} else {
+			query, err = pr.conn.Query(`
+					SELECT * FROM posts
+					WHERE path[1] IN (SELECT id FROM posts WHERE id_thread = $1 AND parent IS NULL ORDER BY id LIMIT $2)
+					ORDER BY path, id`,
+				id, params.Limit)
+		}
+	} else {
+		if params.Desc {
+			query, err = pr.conn.Query(`
+					SELECT * FROM posts
+					WHERE path[1] IN (SELECT id FROM posts WHERE id_thread = $1 AND parent IS NULL AND PATH[1] <
+					(SELECT path[1] FROM posts WHERE id = $2) ORDER BY id DESC LIMIT $3) 
+					ORDER BY path[1] DESC, path, id`,
+				id, params.Since, params.Limit)
+		} else {
+			query, err = pr.conn.Query(`
+					SELECT * FROM posts
+					WHERE path[1] IN (SELECT id FROM posts WHERE thread = $1 AND parent IS NULL AND PATH[1] >
+					(SELECT path[1] FROM posts WHERE id = $2) ORDER BY id ASC LIMIT $3) 
+					ORDER BY path, id`,
+				id, params.Since, params.Limit)
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer query.Close()
+
+	var posts []*models.Post
+	for query.Next() {
+		var p models.Post
+		err = query.Scan(&p.ID, &p.Author, &p.Created, &p.Forum, &p.Message, &p.Parent, &p.Thread, &p.Path, &p.IsEdited)
+		if err != nil {
+			return nil, err
+		}
+		posts = append(posts, &p)
+	}
+
+	return posts, nil
 }

@@ -10,4 +10,6 @@ type ThreadUsecase interface {
 	CreateThreadPosts(thread string, posts []*models.Post) ([]*models.Post, *errors.Error)
 	GetThreadInfo(thread string) (*models.Thread, *errors.Error)
 	RefreshThread(threadId string, thread *models.Thread) (*models.Thread, *errors.Error)
+	GetThreadPosts(slug string, params *models.ThreadPostParameters) ([]*models.Post, *errors.Error)
+	ThreadVote(slug string, vote *models.Vote) (*models.Thread, *errors.Error)
 }

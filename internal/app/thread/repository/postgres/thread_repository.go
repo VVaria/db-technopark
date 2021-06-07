@@ -21,12 +21,12 @@ func NewThreadRepository(conn *pgx.ConnPool) thread.ThreadRepository {
 func (tr *ThreadRepository) SelectThreadByID(id int) (*models.Thread, error) {
 	var thread models.Thread
 	query := tr.conn.QueryRow(`
-		select id, title, author, forum, message, votes, slug, created 
+		select *
 		from threads
 		where id=$1 LIMIT 1;`, id)
 
-	err := query.Scan(&thread.Id, &thread.Title, &thread.Author, &thread.Forum, &thread.Message, &thread.Votes,
-		&thread.Slug, &thread.Created)
+	err := query.Scan(&thread.Id, &thread.Title, &thread.Created, &thread.Author, &thread.Forum, &thread.Message,
+		&thread.Slug, &thread.Votes)
 	if err != nil {
 		return nil, err
 	}
@@ -36,12 +36,12 @@ func (tr *ThreadRepository) SelectThreadByID(id int) (*models.Thread, error) {
 func (tr *ThreadRepository) SelectThreadBySlug(slug string) (*models.Thread, error) {
 	var thread models.Thread
 	query := tr.conn.QueryRow(`
-		select id, title, author, forum, message, votes, slug, created 
+		select *
 		from threads
 		where slug=$1 LIMIT 1;`, slug)
 
-	err := query.Scan(&thread.Id, &thread.Title, &thread.Author, &thread.Forum, &thread.Message, &thread.Votes,
-		&thread.Slug, &thread.Created)
+	err := query.Scan(&thread.Id, &thread.Title, &thread.Created, &thread.Author, &thread.Forum, &thread.Message,
+		&thread.Slug, &thread.Votes)
 	if err != nil {
 		return nil, err
 	}
@@ -75,7 +75,7 @@ func (tr *ThreadRepository) SelectForumThreads(slug string, params *models.Param
 	if params.Since != "" {
 		if params.Desc {
 			query, err = tr.conn.Query(`
-					SELECT id, title, author, forum, message, votes, slug, created FROM threads
+					SELECT * FROM threads
 					WHERE forum=$1 AND created <= $2
 					ORDER BY created DESC
 					LIMIT $3`,
@@ -84,7 +84,7 @@ func (tr *ThreadRepository) SelectForumThreads(slug string, params *models.Param
 				params.Limit)
 		} else {
 			query, err = tr.conn.Query(`
-					SELECT id, title, author, forum, message, votes, slug, created FROM threads
+					SELECT * FROM threads
 					WHERE forum=$1 AND created >= $2
 					ORDER BY created ASC
 					LIMIT $3`,
@@ -95,7 +95,7 @@ func (tr *ThreadRepository) SelectForumThreads(slug string, params *models.Param
 	} else {
 		if params.Desc {
 			query, err = tr.conn.Query(`
-					SELECT id, title, author, forum, message, votes, slug, created FROM threads
+					SELECT * FROM threads
 					WHERE forum=$1
 					ORDER BY created DESC
 					LIMIT $2`,
@@ -103,7 +103,7 @@ func (tr *ThreadRepository) SelectForumThreads(slug string, params *models.Param
 				params.Limit)
 		} else {
 			query, err = tr.conn.Query(`
-					SELECT id, title, author, forum, message, votes, slug, created FROM threads
+					SELECT * FROM threads
 					WHERE forum=$1
 					ORDER BY created ASC
 					LIMIT $2`,
@@ -119,7 +119,7 @@ func (tr *ThreadRepository) SelectForumThreads(slug string, params *models.Param
 
 	for query.Next() {
 		var t models.Thread
-		err := query.Scan(&t.Id, &t.Title, &t.Author, &t.Forum, &t.Message, &t.Votes, &t.Slug, &t.Created)
+		err := query.Scan(&t.Id, &t.Title, &t.Created, &t.Author, &t.Forum, &t.Message, &t.Slug, &t.Votes)
 		if err != nil {
 			return nil, err
 		}
@@ -148,6 +148,43 @@ func (tr *ThreadRepository) UpdateThread(thread *models.Thread) error {
 	err := query.Scan(&thread.Id, &thread.Author, &thread.Created, &thread.Forum, &thread.Message, &thread.Slug,
 		&thread.Title, &thread.Votes)
 
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (tr *ThreadRepository) InsertVote(vote *models.Vote) error {
+	_, err := tr.conn.Exec(`
+			INSERT INTO votes(author, voice, id_thread) 
+			VALUES ($1, $2, $3)`,
+		vote.Nickname, vote.Voice, vote.Thread)
+	if err != nil {
+		return err
+	}
+	_ = tr.UpdateThreadVotes(vote.Thread)
+	return nil
+}
+
+func (tr *ThreadRepository) UpdateVote(vote *models.Vote) error {
+	_, err := tr.conn.Exec(`
+			UPDATE votes 
+			SET voice=$1 
+			WHERE author=$2 and thread=$3`,
+		vote.Voice, vote.Nickname, vote.Thread)
+	if err != nil {
+		return err
+	}
+	_ = tr.UpdateThreadVotes(vote.Thread)
+	return nil
+}
+
+func (tr *ThreadRepository) UpdateThreadVotes(id int) error {
+	_, err := tr.conn.Exec(`
+			UPDATE threads 
+			SET voice=voice+1 
+			WHERE id=$3`,
+		id)
 	if err != nil {
 		return err
 	}

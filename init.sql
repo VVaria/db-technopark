@@ -47,7 +47,7 @@ CREATE TABLE votes
 (
     id        BIGSERIAL PRIMARY KEY,
     author    CITEXT REFERENCES "users" (nickname),
-    voice     BIGINT NOT NULL,
+    voice     INT NOT NULL,
     id_thread INT,
 
     FOREIGN KEY (id_thread) REFERENCES "threads" (id),
@@ -83,6 +83,7 @@ cluster forum_users using forum_users_unique;
 
 CREATE INDEX if not exists thr_slug ON threads using hash (slug);
 CREATE INDEX if not exists thr_date ON threads (created);
+-- CREATE INDEX if not exists thr_votes ON threads (id, votes);
 CREATE INDEX if not exists thr_forum ON threads using hash (forum);
 CREATE INDEX if not exists thr_forum_date ON threads (forum, created);
 
