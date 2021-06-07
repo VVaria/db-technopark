@@ -34,6 +34,7 @@ import (
 )
 
 func main() {
+	fmt.Println("main")
 	postgresDB, err := databases.NewPostgres(configs.Configs.GetPostgresConfig())
 	if err != nil {
 		log.Fatal(err)

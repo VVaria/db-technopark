@@ -23,8 +23,8 @@ func (ur *UserRepository) SelectUsers(user *models.User) ([]models.User, error) 
 	rows, err := ur.conn.Query(`
 			select * 
 			from users 
-			where Nickname=$1 or Email=$2;
-			`, user.Nickname, user.Email)
+			where Nickname=$1 or Email=$2`,
+		user.Nickname, user.Email)
 	defer rows.Close()
 	if err != nil {
 		return nil, err
@@ -56,8 +56,7 @@ func (ur *UserRepository) SelectUserByNickname(nickname string) (*models.User, e
 		select * 
 		from users 
 		where nickname=$1 
-		LIMIT 1;
-		`, nickname)
+		LIMIT 1`, nickname)
 
 	var user models.User
 	err := query.Scan(&user.Nickname, &user.FullName, &user.Email, &user.About)
@@ -72,11 +71,11 @@ func (ur *UserRepository) Update(user *models.User) error {
 	query := ur.conn.QueryRow(`
 			UPDATE users SET
 			fullname=COALESCE(NULLIF($1, ''), fullname),
-			email=COALESCE(NULLIF($3, ''), email),
-			about=COALESCE(NULLIF($2, ''), about)
+			email=COALESCE(NULLIF($2, ''), email),
+			about=COALESCE(NULLIF($3, ''), about)
 			WHERE nickname=$4
-			RETURNING nickname, fullname, email, about
-			`, user.FullName, user.Email, user.About, user.Nickname)
+			RETURNING nickname, fullname, email, about`,
+		user.FullName, user.Email, user.About, user.Nickname)
 
 	err := query.Scan(&user.Nickname, &user.FullName, &user.Email, &user.About)
 	if err != nil {
@@ -95,14 +94,14 @@ func (ur *UserRepository) SelectForumUsers(slug string, params *models.Parameter
 		if params.Desc {
 			query, err = ur.conn.Query(`
 					SELECT nickname, fullname, about, email FROM forum_users
-					WHERE forum=$1 AND nickname < $2
+					WHERE slug=$1 AND nickname < $2
 					ORDER BY nickname DESC
 					LIMIT NULLIF($3, 0)`,
 				slug, params.Since, params.Limit)
 		} else {
 			query, err = ur.conn.Query(`
 					SELECT nickname, fullname, about, email FROM forum_users
-					WHERE forum=$1 AND nickname > $2
+					WHERE slug=$1 AND nickname > $2
 					ORDER BY nickname ASC
 					LIMIT NULLIF($3, 0)`,
 				slug, params.Since, params.Limit)
@@ -111,14 +110,14 @@ func (ur *UserRepository) SelectForumUsers(slug string, params *models.Parameter
 		if params.Desc {
 			query, err = ur.conn.Query(`
 					SELECT nickname, fullname, about, email FROM forum_users
-					WHERE forum=$1
+					WHERE slug=$1
 					ORDER BY nickname DESC
 					LIMIT NULLIF($2, 0)`,
 				slug, params.Limit)
 		} else {
 			query, err = ur.conn.Query(`
 					SELECT nickname, fullname, about, email FROM forum_users
-					WHERE forum=$1
+					WHERE slug=$1
 					ORDER BY nickname ASC
 					LIMIT NULLIF($2, 0)`,
 				slug, params.Limit)

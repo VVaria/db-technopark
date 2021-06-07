@@ -1,0 +1,21 @@
+version: '3'
+
+#docker rm $(docker ps -a -q) && docker volume prune -f
+
+services:
+  postgres:
+    image: postgres:12.2
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    environment:
+      POSTGRES_PASSWORD: docker
+      POSTGRES_DB: docker
+      ENCODING: UTF8
+      LC_COLLATE: en_US.UTF-8
+      LC_CTYPE: en_US.UTF-8
+    ports:
+      - '9432:5432'
+    volumes:
+      - './sql/:/docker-entrypoint-initdb.d/'
+  

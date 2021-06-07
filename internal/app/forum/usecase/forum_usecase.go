@@ -24,11 +24,11 @@ func NewForumUsecase(forumRepo forum.ForumRepository, userRepo user.UserReposito
 }
 
 func (fu *ForumUsecase) CreateForum(forum *models.Forum) (*models.Forum, *errors.Error) {
-	_, err := fu.userRepo.SelectUserByNickname(forum.User)
+	userInfo, err := fu.userRepo.SelectUserByNickname(forum.User)
 	if err != nil {
 		return nil, errors.Cause(errors.UserNotExist)
 	}
-
+	forum.User = userInfo.Nickname
 	err = fu.forumRepo.CreateForum(forum)
 	if err != nil {
 		if pgErr, ok := err.(pgx.PgError); ok && pgErr.Code == "23503" {
@@ -50,7 +50,7 @@ func (fu *ForumUsecase) CreateForum(forum *models.Forum) (*models.Forum, *errors
 func (fu *ForumUsecase) GetForumInfo(slug string) (*models.Forum, *errors.Error) {
 	forum, err := fu.forumRepo.SelectForumBySlug(slug)
 	if err != nil {
-		if pgErr, ok := err.(pgx.PgError); ok && pgErr.Code == "23503" {
+		if err == pgx.ErrNoRows {
 			return nil, errors.Cause(errors.ForumNotExist)
 		}
 		return nil, errors.UnexpectedInternal(err)

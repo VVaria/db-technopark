@@ -13,13 +13,13 @@ import (
 )
 
 type ForumHandler struct {
-	forumUsecase forum.ForumUsecase
+	forumUsecase  forum.ForumUsecase
 	threadUsecase thread.ThreadUsecase
 }
 
 func NewForumHandler(forumUsecase forum.ForumUsecase, threadUsecase thread.ThreadUsecase) *ForumHandler {
 	return &ForumHandler{
-		forumUsecase: forumUsecase,
+		forumUsecase:  forumUsecase,
 		threadUsecase: threadUsecase,
 	}
 }
@@ -40,26 +40,21 @@ func (fh *ForumHandler) ForumCreateHandler(w http.ResponseWriter, r *http.Reques
 	}
 
 	forumInfo, errE := fh.forumUsecase.CreateForum(forum)
-	if errE.ErrorCode == errors.UserNotExist {
-		w.WriteHeader(errE.HttpError)
-		w.Write(errors.JSONMessage("Владелец форума не найден."))
-		return
-	}
-	if errE.ErrorCode == errors.ForumCreateConflict {
-		w.WriteHeader(errE.HttpError)
-		w.Write(errors.JSONMessage("Форум уже присутсвует в базе данных.", forumInfo))
-		return
-	}
 	if errE != nil {
+		if errE.ErrorCode == errors.ForumCreateConflict {
+			w.WriteHeader(errE.HttpError)
+			w.Write(errors.JSONMessage("Форум уже присутсвует в базе данных.", forumInfo))
+			return
+		}
+
 		w.WriteHeader(errE.HttpError)
 		w.Write(errors.JSONError(errE))
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(http.StatusCreated)
 	w.Write(errors.JSONMessage("Форум успешно создан.", forumInfo))
 }
-
 
 func (fh *ForumHandler) ForumDetailsHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
@@ -87,17 +82,12 @@ func (fh *ForumHandler) ForumCreateThreadHandler(w http.ResponseWriter, r *http.
 	flag := thread.Slug == ""
 
 	threadInfo, errE := fh.threadUsecase.CreateThread(thread)
-	if errE.ErrorCode == errors.ForumCreateThreadConflict {
-		w.WriteHeader(errE.HttpError)
-		w.Write(errors.JSONMessage("Ветка обсуждения уже присутсвует в базе данных.", threadInfo))
-		return
-	}
-	if errE.ErrorCode == errors.UserNotExist || errE.ErrorCode == errors.ForumNotExist {
-		w.WriteHeader(errE.HttpError)
-		w.Write(errors.JSONMessage("Автор ветки или форум не найдены."))
-		return
-	}
 	if errE != nil {
+		if errE.ErrorCode == errors.ForumCreateThreadConflict {
+			w.WriteHeader(errE.HttpError)
+			w.Write(errors.JSONMessage("Ветка обсуждения уже присутсвует в базе данных.", threadInfo))
+			return
+		}
 		w.WriteHeader(errE.HttpError)
 		w.Write(errors.JSONError(errE))
 		return
@@ -105,12 +95,12 @@ func (fh *ForumHandler) ForumCreateThreadHandler(w http.ResponseWriter, r *http.
 
 	if flag {
 		threadWithout := models.ThreadNoSlug(threadInfo)
-		w.WriteHeader(http.StatusOK)
+		w.WriteHeader(http.StatusCreated)
 		w.Write(errors.JSONMessage(" Ветка обсуждения успешно создана.", threadWithout))
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(http.StatusCreated)
 	w.Write(errors.JSONMessage(" Ветка обсуждения успешно создана.", threadInfo))
 }
 
@@ -127,25 +117,24 @@ func (fh *ForumHandler) ForumUsersHandler(w http.ResponseWriter, r *http.Request
 	params.Since = r.URL.Query().Get("since")
 	params.Desc, err = strconv.ParseBool(r.URL.Query().Get("desc"))
 	if err != nil {
-		params.Desc = true
+		params.Desc = false
 	}
 
 	users, errE := fh.forumUsecase.GetForumUsers(slug, params)
-	if errE.ErrorCode == errors.ForumNotExist {
-		w.WriteHeader(errE.HttpError)
-		w.Write(errors.JSONMessage("Форум отсутсвует в системе."))
-		return
-	}
 	if errE != nil {
 		w.WriteHeader(errE.HttpError)
 		w.Write(errors.JSONError(errE))
 		return
 	}
-
+	if len(users) == 0 {
+		body := []models.User{}
+		w.WriteHeader(http.StatusOK)
+		w.Write(errors.JSONMessage("Информация о ветках обсуждения на форуме.", body))
+		return
+	}
 	w.WriteHeader(http.StatusOK)
 	w.Write(errors.JSONMessage("Информация о пользователях форума.", users))
 }
-
 
 func (fh *ForumHandler) ForumThreadsHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
@@ -160,18 +149,20 @@ func (fh *ForumHandler) ForumThreadsHandler(w http.ResponseWriter, r *http.Reque
 	params.Since = r.URL.Query().Get("since")
 	params.Desc, err = strconv.ParseBool(r.URL.Query().Get("desc"))
 	if err != nil {
-		params.Desc = true
+		params.Desc = false
 	}
 
 	threads, errE := fh.forumUsecase.GetForumThreads(slug, params)
-	if errE.ErrorCode == errors.ForumNotExist {
-		w.WriteHeader(errE.HttpError)
-		w.Write(errors.JSONMessage("Форум отсутсвует в системе."))
-		return
-	}
 	if errE != nil {
 		w.WriteHeader(errE.HttpError)
 		w.Write(errors.JSONError(errE))
+		return
+	}
+
+	if len(threads) == 0 {
+		body := []models.Thread{}
+		w.WriteHeader(http.StatusOK)
+		w.Write(errors.JSONMessage("Информация о ветках обсуждения на форуме.", body))
 		return
 	}
 

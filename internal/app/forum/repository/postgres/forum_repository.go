@@ -4,7 +4,6 @@ import (
 	"github.com/VVaria/db-technopark/internal/app/forum"
 	"github.com/VVaria/db-technopark/internal/models"
 	"github.com/jackc/pgx"
-
 	//"github.com/VVaria/db-technopark/internal/app/models"
 )
 
@@ -42,6 +41,5 @@ func (fr *ForumRepository) CreateForum(forum *models.Forum) error {
 	if err != nil {
 		return err
 	}
-
 	return nil
 }

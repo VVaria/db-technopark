@@ -69,18 +69,14 @@ CREATE UNLOGGED TABLE forum_users
 
 
 CREATE INDEX all_forum_users ON forum_users (nickname, fullname, about, email);
-CLUSTER forum_users USING all_forum_users;
 CREATE INDEX nickname_forum_users ON forum_users using hash (nickname);
 CREATE INDEX forums_users_info ON forum_users (fullname, about, email);
 
 CREATE INDEX if not exists user_nickname ON users using hash (nickname);
-CLUSTER users USING user_nickname;
 CREATE INDEX if not exists user_email ON users using hash (email);
 CREATE INDEX if not exists forum_slug ON forum using hash (slug);
 
 CREATE UNIQUE INDEX if not exists forum_users_unique ON forum_users (slug, nickname);
-cluster forum_users using forum_users_unique;
-
 CREATE INDEX if not exists thr_slug ON threads using hash (slug);
 CREATE INDEX if not exists thr_date ON threads (created);
 -- CREATE INDEX if not exists thr_votes ON threads (id, votes);

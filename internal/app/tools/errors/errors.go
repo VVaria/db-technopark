@@ -42,7 +42,7 @@ func JSONError(error *Error) []byte {
 
 func JSONMessage(message ...interface{}) []byte {
 	if len(message) > 1 {
-		jsonSucc, err := json.Marshal(Success{Description: message[0].(string), Data: message[1].(string)})
+		jsonSucc, err := json.Marshal(message[1])
 		if err != nil {
 			return []byte("")
 		}
@@ -68,47 +68,47 @@ var CustomErrors = map[ErrorType]*Error{
 	UserNotExist: {
 		ErrorCode: UserNotExist,
 		HttpError: http.StatusNotFound,
-		Message:   "user doesn't exist\n",
+		Message:   "Пользователь отсутсвует в системе.",
 	},
 	ForumNotExist: {
 		ErrorCode: ForumNotExist,
 		HttpError: http.StatusNotFound,
-		Message:   "forum doesn't exist\n",
+		Message:   "Форум отсутсвует в системе.",
 	},
 	ThreadNotExist: {
 		ErrorCode: ThreadNotExist,
 		HttpError: http.StatusNotFound,
-		Message:   "thread doesn't exist\n",
+		Message:   "Ветка обсуждения отсутсвует в форуме.",
 	},
 	PostNotExist: {
 		ErrorCode: PostNotExist,
 		HttpError: http.StatusNotFound,
-		Message:   "post doesn't exist\n",
+		Message:   "Сообщение отсутсвует в форуме.",
 	},
 	UserCreateConflict: {
 		ErrorCode: UserCreateConflict,
 		HttpError: http.StatusConflict,
-		Message:   "conflicts with user creation\n",
+		Message:   "Пользователь уже присутсвует в базе данных.",
 	},
 	UserProfileConflict: {
 		ErrorCode: UserProfileConflict,
 		HttpError: http.StatusConflict,
-		Message:   "conflicts with user profile\n",
+		Message:   "Новые данные профиля пользователя конфликтуют с имеющимися пользователями.",
 	},
 	ForumCreateConflict: {
 		ErrorCode: ForumCreateConflict,
 		HttpError: http.StatusConflict,
-		Message:   "conflicts with forum creation\n",
+		Message:   "Форум уже присутсвует в базе данных.",
 	},
 	ForumCreateThreadConflict: {
 		ErrorCode: ForumCreateThreadConflict,
 		HttpError: http.StatusConflict,
-		Message:   "conflicts with thread creation\n",
+		Message:   "Ветка обсуждения уже присутсвует в базе данных.",
 	},
 	PostWrongThread: {
 		ErrorCode: PostWrongThread,
 		HttpError: http.StatusConflict,
-		Message:   "Parent post was created in another thread\n",
+		Message:   "Хотя бы один родительский пост отсутсвует в текущей ветке обсуждения",
 	},
 }
 

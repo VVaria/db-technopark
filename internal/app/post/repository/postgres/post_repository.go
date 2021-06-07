@@ -23,10 +23,9 @@ func NewPostRepository(conn *pgx.ConnPool) post.PostRepository {
 
 func (pr *PostRepository) SelectPostById(id int) (*models.Post, error) {
 	var post models.Post
-
-	err := pr.conn.QueryRow(`SELECT * FROM posts WHERE id=$1 LIMIT 1;`, id).
-		Scan(&post.ID, &post.Author, &post.AuthorId, &post.Created, &post.Forum, &post.IsEdited, &post.Message,
-		&post.Parent, &post.Thread, &post.Path)
+	err := pr.conn.QueryRow(`SELECT * FROM posts WHERE id=$1 LIMIT 1`, id).
+		Scan(&post.ID, &post.Author, &post.Created, &post.Forum, &post.Message,
+		&post.Parent, &post.Thread, &post.Path, &post.IsEdited)
 	if err != nil {
 		return nil, err
 	}
@@ -41,16 +40,15 @@ func (pr *PostRepository) Update(post *models.Post) error {
 			WHERE id=$2 
 			RETURNING *`,
 		post.Message, post.ID,
-	).Scan(&post.ID, &post.Author, &post.AuthorId, &post.Created, &post.Forum, &post.IsEdited, &post.Message,
-		&post.Parent, &post.Thread, &post.Path)
+	).Scan(&post.ID, &post.Author, &post.Created, &post.Forum, &post.Message,
+		&post.Parent, &post.Thread, &post.Path, &post.IsEdited)
 	return err
 }
 
 func (pr *PostRepository) InsertPosts(posts []*models.Post, threadID int, threadForum string) ([]*models.Post, error) {
 	if len(posts) == 0 {
-		return nil, nil
+		return posts, nil
 	}
-
 	queryString := `INSERT INTO posts(author, created, forum, message, parent, id_thread) VALUES `
 	var queryParameters []interface{}
 	created := time.Now()
@@ -66,7 +64,6 @@ func (pr *PostRepository) InsertPosts(posts []*models.Post, threadID int, thread
 
 	queryString = strings.TrimSuffix(queryString, ",")
 	queryString += ` RETURNING *`
-
 	query, err := pr.conn.Query(queryString, queryParameters...)
 	if err != nil {
 		return nil, err
@@ -77,8 +74,8 @@ func (pr *PostRepository) InsertPosts(posts []*models.Post, threadID int, thread
 	for query.Next() {
 		var post models.Post
 
-		err := query.Scan(&post.ID, &post.Author, &post.Created, &post.Forum, &post.Message, &post.IsEdited,
-			&post.Parent, &post.Thread, &post.Path)
+		err := query.Scan(&post.ID, &post.Author, &post.Created, &post.Forum, &post.Message, &post.Parent,
+			&post.Thread, &post.Path, &post.IsEdited)
 		if err != nil {
 			return nil, err
 		}
@@ -86,6 +83,15 @@ func (pr *PostRepository) InsertPosts(posts []*models.Post, threadID int, thread
 		postsInfo = append(postsInfo, &post)
 	}
 
+	if pgErr, ok := query.Err().(pgx.PgError); ok {
+		if pgErr.Code == "00409" {
+			return nil, query.Err()
+		}
+
+		if pgErr.Code == "23503" {
+			return nil, query.Err()
+		}
+	}
 	return postsInfo, nil
 }
 
@@ -152,33 +158,39 @@ func (pr *PostRepository) SelectThreadPostsTree(id int, params *models.ThreadPos
 		if params.Desc {
 			query, err = pr.conn.Query(`
 					SELECT * FROM posts
-					WHERE id_thread=$1 
+					WHERE id_thread = $1 
 					ORDER BY path DESC, id DESC 
-					LIMIT NULLIF($2, 0)`,
-				id, params.Limit)
+					LIMIT $2`,
+				id,
+				params.Limit)
 		} else {
 			query, err = pr.conn.Query(`
 					SELECT * FROM posts
-					WHERE id_thread=$1 
+					WHERE id_thread = $1 
 					ORDER BY path ASC, id ASC
-					LIMIT NULLIF($2, 0)`,
-				id, params.Limit)
+					LIMIT $2`,
+				id,
+				params.Limit)
 		}
 	} else {
 		if params.Desc {
 			query, err = pr.conn.Query(`
 					SELECT * FROM posts
-					WHERE id_thread=$1 AND PATH < (SELECT path FROM posts WHERE id = $2)
-					ORDER BY path DESC, id DESC 
-					LIMIT NULLIF($3, 0)`,
-				id, params.Since, params.Limit)
+					WHERE id_thread = $1 AND PATH < (SELECT path FROM posts WHERE id = $2)
+					ORDER BY path DESC, id DESC
+					LIMIT $3`,
+				id,
+				params.Since,
+				params.Limit)
 		} else {
 			query, err = pr.conn.Query(`
 					SELECT * FROM posts
-					WHERE id_thread=$1 AND PATH > (SELECT path FROM post WHERE id = $2)
-					ORDER BY path ASC, id ASC 
-					LIMIT NULLIF($3, 0)`,
-				id, params.Since, params.Limit)
+					WHERE id_thread = $1 AND PATH > (SELECT path FROM posts WHERE id = $2)
+					ORDER BY path ASC, id ASC
+					LIMIT $3`,
+				id,
+				params.Since,
+				params.Limit)
 		}
 	}
 	if err != nil {
@@ -228,7 +240,7 @@ func (pr *PostRepository) SelectThreadPostsParent(id int, params *models.ThreadP
 		} else {
 			query, err = pr.conn.Query(`
 					SELECT * FROM posts
-					WHERE path[1] IN (SELECT id FROM posts WHERE thread = $1 AND parent IS NULL AND PATH[1] >
+					WHERE path[1] IN (SELECT id FROM posts WHERE id_thread = $1 AND parent IS NULL AND PATH[1] >
 					(SELECT path[1] FROM posts WHERE id = $2) ORDER BY id ASC LIMIT $3) 
 					ORDER BY path, id`,
 				id, params.Since, params.Limit)

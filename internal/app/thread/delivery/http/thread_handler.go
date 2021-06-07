@@ -40,26 +40,41 @@ func (th *ThreadHandler) ThreadCreateHandler(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-
-	postsInfo, errE := th.threadUsecase.CreateThreadPosts(thread, posts)
-	if errE.ErrorCode == errors.ThreadNotExist {
-		w.WriteHeader(errE.HttpError)
-		w.Write(errors.JSONMessage("Ветка обсуждения отсутствует в базе данных."))
-		return
-	}
-	if errE.ErrorCode == errors.PostWrongThread {
-		w.WriteHeader(errE.HttpError)
-		w.Write(errors.JSONMessage("Хотя бы один родительский пост отсутсвует в текущей ветке обсуждения."))
-		return
-	}
+	t, errE := th.threadUsecase.GetThreadInfo(thread)
 	if errE != nil {
 		w.WriteHeader(errE.HttpError)
 		w.Write(errors.JSONError(errE))
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
-	w.Write(errors.JSONMessage("Посты успешно созданы.", postsInfo))
+	if len(posts) == 0 {
+		body := []models.Post{}
+		w.WriteHeader(http.StatusCreated)
+		w.Write(errors.JSONMessage("Информация о ветке обсуждения.", body))
+		return
+	}
+
+	postsInfo, errE := th.threadUsecase.CreateThreadPosts(t, posts)
+	if errE != nil {
+		w.WriteHeader(errE.HttpError)
+		w.Write(errors.JSONError(errE))
+		return
+	}
+	var result []*models.PostShort
+	for _, i := range postsInfo {
+		p := &models.PostShort{
+			ID: i.ID,
+			Thread: i.Thread,
+			Author: i.Author,
+			Message: i.Message,
+			Created: i.Created,
+			Forum: i.Forum,
+			Parent: i.Parent,
+		}
+		result = append(result, p)
+	}
+	w.WriteHeader(http.StatusCreated)
+	w.Write(errors.JSONMessage("Посты успешно созданы.", result))
 }
 
 func (th *ThreadHandler) ThreadGetDetailsHandler(w http.ResponseWriter, r *http.Request) {
@@ -67,27 +82,23 @@ func (th *ThreadHandler) ThreadGetDetailsHandler(w http.ResponseWriter, r *http.
 	thread := vars["slug_or_id"]
 
 	threadInfo, errE := th.threadUsecase.GetThreadInfo(thread)
-	if errE.ErrorCode == errors.ThreadNotExist {
-		w.WriteHeader(errE.HttpError)
-		w.Write(errors.JSONMessage("Ветка обсуждения отсутствует в базе данных."))
-		return
-	}
 	if errE != nil {
 		w.WriteHeader(errE.HttpError)
 		w.Write(errors.JSONError(errE))
 		return
 	}
 
-	var body interface{}
-	body = threadInfo
 	if models.IsUuid(threadInfo.Slug) {
+		var body interface{}
 		body = models.ThreadNoSlug(threadInfo)
+		w.WriteHeader(http.StatusOK)
+		w.Write(errors.JSONMessage("Информация о ветке обсуждения.", body))
+		return
 	}
 
 	w.WriteHeader(http.StatusOK)
-	w.Write(errors.JSONMessage("Информация о ветке обсуждения.", body))
+	w.Write(errors.JSONMessage("Информация о ветке обсуждения.", threadInfo))
 }
-
 
 func (th *ThreadHandler) ThreadRefreshHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
@@ -100,11 +111,6 @@ func (th *ThreadHandler) ThreadRefreshHandler(w http.ResponseWriter, r *http.Req
 	}
 
 	threadInfo, errE := th.threadUsecase.RefreshThread(thread, data)
-	if errE.ErrorCode == errors.ThreadNotExist {
-		w.WriteHeader(errE.HttpError)
-		w.Write(errors.JSONMessage("Ветка обсуждения отсутствует в базе данных."))
-		return
-	}
 	if errE != nil {
 		w.WriteHeader(errE.HttpError)
 		w.Write(errors.JSONError(errE))
@@ -133,11 +139,11 @@ func (th *ThreadHandler) ThreadPostsHandler(w http.ResponseWriter, r *http.Reque
 	}
 	params.Since, err = strconv.Atoi(r.URL.Query().Get("since"))
 	if err != nil {
-		return
+		params.Since = 0
 	}
 	params.Desc, err = strconv.ParseBool(r.URL.Query().Get("desc"))
 	if err != nil {
-		params.Desc = true
+		params.Desc = false
 	}
 	params.Sort = r.URL.Query().Get("sort")
 	if params.Sort == "" {
@@ -145,14 +151,17 @@ func (th *ThreadHandler) ThreadPostsHandler(w http.ResponseWriter, r *http.Reque
 	}
 
 	posts, errE := th.threadUsecase.GetThreadPosts(thread, params)
-	if errE.ErrorCode == errors.ThreadNotExist {
-		w.WriteHeader(errE.HttpError)
-		w.Write(errors.JSONMessage("Ветка обсуждения отсутствует в базе данных."))
-		return
-	}
 	if errE != nil {
 		w.WriteHeader(errE.HttpError)
 		w.Write(errors.JSONError(errE))
+		return
+	}
+
+
+	if len(posts) == 0 {
+		body := []models.Post{}
+		w.WriteHeader(http.StatusOK)
+		w.Write(errors.JSONMessage("Информация о ветке обсуждения.", body))
 		return
 	}
 
@@ -171,11 +180,6 @@ func (th *ThreadHandler) ThreadVoteHandler(w http.ResponseWriter, r *http.Reques
 	}
 
 	threadInfo, errE := th.threadUsecase.ThreadVote(thread, vote)
-	if errE.ErrorCode == errors.ThreadNotExist {
-		w.WriteHeader(errE.HttpError)
-		w.Write(errors.JSONMessage("Ветка обсуждения отсутствует в базе данных."))
-		return
-	}
 	if errE != nil {
 		w.WriteHeader(errE.HttpError)
 		w.Write(errors.JSONError(errE))

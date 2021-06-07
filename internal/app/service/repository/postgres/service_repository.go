@@ -25,22 +25,22 @@ func (sr *ServiceRepository) ClearAll() error {
 
 func (sr *ServiceRepository) ServiceStatus() (*models.Status, error) {
 	var status models.Status
-	err := sr.conn.QueryRow(`SELECT COUNT(*) FROM users;`).Scan(&status.User)
+	err := sr.conn.QueryRow(`SELECT COUNT(*) FROM users`).Scan(&status.User)
 	if err != nil {
 		status.User = 0
 		return nil, err
 	}
-	err = sr.conn.QueryRow(`SELECT COUNT(*) FROM forum;`).Scan(&status.Forum)
+	err = sr.conn.QueryRow(`SELECT COUNT(*) FROM forum`).Scan(&status.Forum)
 	if err != nil {
 		status.Forum = 0
 		return nil, err
 	}
-	err = sr.conn.QueryRow(`SELECT COUNT(*) FROM thread;`).Scan(&status.Thread)
+	err = sr.conn.QueryRow(`SELECT COUNT(*) FROM threads`).Scan(&status.Thread)
 	if err != nil {
 		status.Thread = 0
 		return nil, err
 	}
-	err = sr.conn.QueryRow(`SELECT COUNT(*) FROM post;`).Scan(&status.Post)
+	err = sr.conn.QueryRow(`SELECT COUNT(*) FROM posts`).Scan(&status.Post)
 	if err != nil {
 		status.Post = 0
 		return nil, err

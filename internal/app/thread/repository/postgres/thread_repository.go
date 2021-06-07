@@ -2,10 +2,10 @@ package postgres
 
 import (
 	"fmt"
+
+	"github.com/VVaria/db-technopark/internal/app/thread"
 	"github.com/VVaria/db-technopark/internal/models"
 	"github.com/jackc/pgx"
-	//"github.com/VVaria/db-technopark/internal/app/models"
-	"github.com/VVaria/db-technopark/internal/app/thread"
 )
 
 type ThreadRepository struct {
@@ -21,9 +21,9 @@ func NewThreadRepository(conn *pgx.ConnPool) thread.ThreadRepository {
 func (tr *ThreadRepository) SelectThreadByID(id int) (*models.Thread, error) {
 	var thread models.Thread
 	query := tr.conn.QueryRow(`
-		select *
+		select id, title, created, author, forum, message, slug, votes
 		from threads
-		where id=$1 LIMIT 1;`, id)
+		where id=$1 LIMIT 1`, id)
 
 	err := query.Scan(&thread.Id, &thread.Title, &thread.Created, &thread.Author, &thread.Forum, &thread.Message,
 		&thread.Slug, &thread.Votes)
@@ -34,34 +34,34 @@ func (tr *ThreadRepository) SelectThreadByID(id int) (*models.Thread, error) {
 }
 
 func (tr *ThreadRepository) SelectThreadBySlug(slug string) (*models.Thread, error) {
-	var thread models.Thread
+	thread :=  &models.Thread{}
 	query := tr.conn.QueryRow(`
-		select *
+		select id, title, created, author, forum, message, slug, votes
 		from threads
-		where slug=$1 LIMIT 1;`, slug)
+		where slug=$1 LIMIT 1`, slug)
 
 	err := query.Scan(&thread.Id, &thread.Title, &thread.Created, &thread.Author, &thread.Forum, &thread.Message,
 		&thread.Slug, &thread.Votes)
 	if err != nil {
 		return nil, err
 	}
-	return &thread, nil
+	return thread, nil
 }
 
 func (tr *ThreadRepository) InsertThread(thread *models.Thread) error {
 	query := tr.conn.QueryRow(`
-		INSERT INTO threads (title, author, forum, message, slug, created)
+		INSERT INTO threads (title, created, author, forum, message, slug)
 		VALUES ($1, $2, $3, $4, $5, $6)
-		RETURNING id, title, author, forum, message, votes, slug, created`,
+		RETURNING id, title, created, author, forum, message, slug, votes`,
 		thread.Title,
+		thread.Created,
 		thread.Author,
 		thread.Forum,
 		thread.Message,
-		thread.Slug,
-		thread.Created)
+		thread.Slug)
 
-	err := query.Scan(&thread.Id, &thread.Title, &thread.Author, &thread.Forum, &thread.Message, &thread.Votes,
-		&thread.Slug, &thread.Created)
+	err := query.Scan(&thread.Id, &thread.Title, &thread.Created, &thread.Author, &thread.Forum, &thread.Message,
+		&thread.Slug, &thread.Votes)
 	if err != nil {
 		return err
 	}
@@ -145,8 +145,8 @@ func (tr *ThreadRepository) UpdateThread(thread *models.Thread) error {
 		query = tr.conn.QueryRow(queryString, thread.Title, thread.Message, thread.Slug)
 	}
 
-	err := query.Scan(&thread.Id, &thread.Author, &thread.Created, &thread.Forum, &thread.Message, &thread.Slug,
-		&thread.Title, &thread.Votes)
+	err := query.Scan(&thread.Id, &thread.Title, &thread.Created, &thread.Author, &thread.Forum, &thread.Message, &thread.Slug,
+		 &thread.Votes)
 
 	if err != nil {
 		return err
@@ -162,7 +162,7 @@ func (tr *ThreadRepository) InsertVote(vote *models.Vote) error {
 	if err != nil {
 		return err
 	}
-	_ = tr.UpdateThreadVotes(vote.Thread)
+	//_ = tr.UpdateThreadVotes(vote.Thread)
 	return nil
 }
 
@@ -170,12 +170,12 @@ func (tr *ThreadRepository) UpdateVote(vote *models.Vote) error {
 	_, err := tr.conn.Exec(`
 			UPDATE votes 
 			SET voice=$1 
-			WHERE author=$2 and thread=$3`,
+			WHERE author=$2 and id_thread=$3`,
 		vote.Voice, vote.Nickname, vote.Thread)
 	if err != nil {
 		return err
 	}
-	_ = tr.UpdateThreadVotes(vote.Thread)
+	//_ = tr.UpdateThreadVotes(vote.Thread)
 	return nil
 }
 

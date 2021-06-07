@@ -1,44 +1,45 @@
 package usecase
 
 import (
+	"github.com/VVaria/db-technopark/internal/app/forum"
 	"github.com/VVaria/db-technopark/internal/app/post"
+	"github.com/VVaria/db-technopark/internal/app/thread"
+	"github.com/VVaria/db-technopark/internal/app/tools/errors"
 	"github.com/VVaria/db-technopark/internal/app/user"
+	"github.com/VVaria/db-technopark/internal/models"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx"
 	"strconv"
-
-	"github.com/VVaria/db-technopark/internal/app/forum"
-	"github.com/VVaria/db-technopark/internal/app/thread"
-	"github.com/VVaria/db-technopark/internal/app/tools/errors"
-	"github.com/VVaria/db-technopark/internal/models"
 )
 
 type ThreadUsecase struct {
 	threadRepo thread.ThreadRepository
 	forumRepo  forum.ForumRepository
-	userRepo user.UserRepository
-	postRepo post.PostRepository
+	userRepo   user.UserRepository
+	postRepo   post.PostRepository
 }
 
 func NewThreadUsecase(threadRepo thread.ThreadRepository, forumRepo forum.ForumRepository, userRepo user.UserRepository, postRepo post.PostRepository) thread.ThreadUsecase {
 	return &ThreadUsecase{
 		threadRepo: threadRepo,
 		forumRepo:  forumRepo,
-		userRepo: userRepo,
-		postRepo: postRepo,
+		userRepo:   userRepo,
+		postRepo:   postRepo,
 	}
 }
 func (tu *ThreadUsecase) CreateThread(thread *models.Thread) (*models.Thread, *errors.Error) {
-	_, err := tu.forumRepo.SelectForumBySlug(thread.Forum)
+	forum, err := tu.forumRepo.SelectForumBySlug(thread.Forum)
 	if err != nil {
 		return nil, errors.Cause(errors.ForumNotExist)
 	}
 
-	_, err = tu.userRepo.SelectUserByNickname(thread.Author)
+	auth, err := tu.userRepo.SelectUserByNickname(thread.Author)
 	if err != nil {
 		return nil, errors.Cause(errors.UserNotExist)
 	}
 
+	thread.Forum = forum.Slug
+	thread.Author = auth.Nickname
 	if thread.Slug == "" {
 		slug, err := uuid.NewRandom()
 		if err != nil {
@@ -47,37 +48,23 @@ func (tu *ThreadUsecase) CreateThread(thread *models.Thread) (*models.Thread, *e
 		thread.Slug = slug.String()
 	}
 
-
 	err = tu.threadRepo.InsertThread(thread)
 	if err != nil {
-		if pgErr, ok := err.(pgx.PgError); ok {
-			if pgErr.Code == "23503" {
-				return nil, errors.Cause(errors.ThreadNotExist)
-			}
-
-			if pgErr.Code == "23505" {
-				threadInfo, err := tu.threadRepo.SelectThreadByID(thread.Id)
-				if err != nil {
-					return nil, errors.UnexpectedInternal(err)
-				}
-				return threadInfo, errors.Cause(errors.ForumCreateThreadConflict)
-			}
+		threadInfo, err := tu.threadRepo.SelectThreadBySlug(thread.Slug)
+		if err != nil {
+			return nil, errors.Cause(errors.ForumNotExist)
 		}
-		return nil, errors.UnexpectedInternal(err)
+		return threadInfo, errors.Cause(errors.ForumCreateThreadConflict)
 	}
 
-	return thread, nil
+return thread, nil
 }
 
-func (tu *ThreadUsecase) CreateThreadPosts(thread string, posts []*models.Post) ([]*models.Post, *errors.Error) {
-	threadInfo, errE := tu.GetThreadInfo(thread)
-	if errE != nil {
-		return nil, errors.Cause(errors.ThreadNotExist)
-	}
-	postsInfo, err := tu.postRepo.InsertPosts(posts, threadInfo.Id, threadInfo.Forum)
+func (tu *ThreadUsecase) CreateThreadPosts(thread *models.Thread, posts []*models.Post) ([]*models.Post, *errors.Error) {
+	postsInfo, err := tu.postRepo.InsertPosts(posts, thread.Id, thread.Forum)
 	if err != nil {
 		if pgErr, ok := err.(pgx.PgError); ok {
-			if pgErr.Code == "12345" {
+			if pgErr.Code == "00409" {
 				return nil, errors.Cause(errors.PostWrongThread)
 			}
 
@@ -154,6 +141,7 @@ func (tu *ThreadUsecase) GetThreadPosts(slug string, params *models.ThreadPostPa
 		}
 		break
 	}
+
 	return posts, nil
 }
 

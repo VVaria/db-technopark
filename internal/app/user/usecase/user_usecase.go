@@ -1,7 +1,6 @@
 package usecase
 
 import (
-	"database/sql"
 	"github.com/jackc/pgx"
 
 	"github.com/VVaria/db-technopark/internal/app/tools/errors"
@@ -22,7 +21,7 @@ func NewUserUsecase(userRepo user.UserRepository) user.UserUsecase {
 func (uu *UserUsecase) CreateUser(user *models.User) ([]models.User, *errors.Error)  {
 	var users []models.User
 	users, err := uu.userRepo.SelectUsers(user)
-	if err != nil && err != sql.ErrNoRows {
+	if err != nil && err != pgx.ErrNoRows {
 		return nil, errors.UnexpectedInternal(err)
 	}
 	if len(users) != 0 {
@@ -40,7 +39,7 @@ func (uu *UserUsecase) CreateUser(user *models.User) ([]models.User, *errors.Err
 func (uu *UserUsecase) GetUserByNickname(nickname string) (*models.User, *errors.Error) {
 	user, err := uu.userRepo.SelectUserByNickname(nickname)
 	switch {
-	case err == sql.ErrNoRows:
+	case err == pgx.ErrNoRows:
 		return nil, errors.Cause(errors.UserNotExist)
 	case err != nil:
 		return nil, errors.UnexpectedInternal(err)
